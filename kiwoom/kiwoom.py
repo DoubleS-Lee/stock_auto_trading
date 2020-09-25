@@ -442,16 +442,16 @@ class Kiwoom(QAxWidget):
     
     def read_code(self):
         if os.path.exists('files/condition_stock.txt'): # 파일이 있으면 True, 없으면 False로 나옴
-            f = open('diles/condition_stock.txt', 'r', encoding='utf8')
+            f = open('files/condition_stock.txt', 'r', encoding='utf8')
 
             lines = f.readlines()
             for line in lines:
                 if line != '':
                     ls = line.split('\t')
-
                     stock_code = ls[0]
                     stock_name = ls[1]
                     stock_price = int(ls[2].split('\n')[0])
+                    print(stock_price)
                     stock_price = abs(stock_price)  # 키움 API에서 현재가를 받아올때 하락이면 앞에 -가 붙어서 나오기 때문에 절대값을 씌워준다
 
                     self.portfolio_stock_dict.update({stock_code:{'종목명':stock_name, '현재가':stock_price}})  # 예시 {'200546':{'종목명':'삼성','현재가':50000}, '200546':{'종목명':'삼성','현재가':50000}}
@@ -503,7 +503,7 @@ class Kiwoom(QAxWidget):
                 self.portfolio_stock_dict.update({code: {'스크린번호':str(self.screen_real_stock), '주문용스크린번호':str(self.screen_meme_stock)}})
 
             cnt += 1
-        print(self.potfolio_stock_dict)
+        print(self.portfolio_stock_dict)
     
     # 실시간 데이터 처리 함수
     def realdata_slot(self, sCode, sRealType, sRealData):
@@ -608,9 +608,9 @@ class Kiwoom(QAxWidget):
                                                     sCode, jd['주문가능수량'], 0, self.realType.SENDTYPE['거래구분']['시장가'], ''])
 
                     if order_success == 0:
-                        self.logging.logger.debug('매도주문 전달 성공')
+                        print('매도주문 전달 성공')
                     else:
-                        self.logging.logger.debug('매도주문 전달 실패')
+                        print('매도주문 전달 실패')
 
             # 매수조건 !!!!   등락율이 2.0% 이상이고 오늘 산 잔고에 없을 경우/ d는 등락율
             elif d > 2.0 and sCode not in self.jango_dict:
@@ -618,7 +618,7 @@ class Kiwoom(QAxWidget):
 
                 # 얼만큼 살지 결정(quantity)
                 # e는 (최우선)매도호가
-                result = (self.user_money * 0.1 / e)
+                result = (self.use_money * 0.1 / e)
                 quantity = int(result)
 
                 order_success = self.dynamicCall('SendOrder(String, String, String, int, String, int, int, String, String)',
@@ -626,9 +626,9 @@ class Kiwoom(QAxWidget):
                                                 sCode, quantity, e, self.realType.SENDTYPE['거래구분']['지정가'], ''])
                 
                 if order_success == 0:
-                    self.logging.logger.debug('매수주문 전달 성공')
+                    print('매수주문 전달 성공')
                 else:
-                    self.logging.logger.debug('매수주문 전달 실패')
+                    print('매수주문 전달 실패')
 
             # 여기서 중요#####################
             # self.not_account_stock_dict를 다른 메모리에 복사해놓고 그걸로 계산을 진행해야한다
@@ -650,9 +650,9 @@ class Kiwoom(QAxWidget):
                                                     sCode, 0, 0, self.realType.SENDTYPE['거래구분']['지정가'], order_num])
 
                     if order_success == 0:
-                        self.logging.logger.debug('매수취소 전달 성공')
+                        print('매수취소 전달 성공')
                     else:
-                        self.logging.logger.debug('매수취소 전달 실패')
+                        print('매수취소 전달 실패')
                 
                 # 미체결 수량이 0이면 우리의 딕셔너리에서도 지워준다
                 elif not_quantity == 0:
@@ -676,7 +676,7 @@ class Kiwoom(QAxWidget):
             chegual_time_str = self.dynamicCall('GetChejanData(int)', self.realType.REALTYPE['주문체결']['주문/체결시간'])
             chegual_price = self.dynamicCall('GetChejanData(int)', self.realType.REALTYPE['주문체결']['체결가'])
 
-            srock_name = stock_name.strip()
+            stock_name = stock_name.strip()
             order_quan = int(order_quan)
             order_price = int(order_price)
             not_chegual_quan = int(not_chegual_quan)
@@ -737,17 +737,17 @@ class Kiwoom(QAxWidget):
             like_quan = self.dynamicCall('GetChejanData(int)', self.realType.REALTYPE['잔고']['주문가능수량'])   # 접수, 확인, 체결
             buy_price = self.dynamicCall('GetChejanData(int)', self.realType.REALTYPE['잔고']['매입단가'])
             total_buy_price = self.dynamicCall('GetChejanData(int)', self.realType.REALTYPE['잔고']['총매입가'])
-            meme_gubun = self.dynamicCall('GetChejanData(int)', self.realType.REALTYPE['잔고']['매도매수구분'])
+            # meme_gubun = self.dynamicCall('GetChejanData(int)', self.realType.REALTYPE['잔고']['매도/매수구분'])
             first_sell_price = self.dynamicCall('GetChejanData(int)', self.realType.REALTYPE['잔고']['(최우선)매도호가'])
             first_buy_price = self.dynamicCall('GetChejanData(int)', self.realType.REALTYPE['잔고']['(최우선)매수호가'])
 
             stock_name = stock_name.strip()
-            current_price = abc(int(current_price))
+            current_price = abs(int(current_price))
             stock_quan = int(stock_quan)
             like_quan = int(like_quan)
             buy_price = abs(int(buy_price))
             total_buy_price = int(total_buy_price)
-            meme_gubun = self.realType.REALTYPE['매도매수구분'][meme_gubun]
+            # meme_gubun = self.realType.REALTYPE['매도/매수구분'][meme_gubun]
             first_sell_price = abs(int(first_sell_price))
             first_buy_price = abs(int(first_buy_price))
 
@@ -762,7 +762,7 @@ class Kiwoom(QAxWidget):
             self.jango_dict[sCode].update({'주문가능수량': like_quan})
             self.jango_dict[sCode].update({'매입단가': buy_price})
             self.jango_dict[sCode].update({'총매입가': total_buy_price})
-            self.jango_dict[sCode].update({'매도매수구분': meme_gubun})
+            #self.jango_dict[sCode].update({'매도/매수구분': meme_gubun})
             self.jango_dict[sCode].update({'(최우선)매도호가': first_sell_price})
             self.jango_dict[sCode].update({'(최우선)매수호가': first_buy_price})
 
